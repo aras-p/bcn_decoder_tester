@@ -10,3 +10,9 @@
 [submodule "libs/icbc"]
 	path = libs/icbc
 	url = https://github.com/castano/icbc
+[submodule "libs/DirectX-Headers"]
+	path = libs/DirectX-Headers
+	url = https://github.com/microsoft/DirectX-Headers
+[submodule "libs/DirectXMath"]
+	path = libs/DirectXMath
+	url = https://github.com/microsoft/DirectXMath

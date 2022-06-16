@@ -7,6 +7,10 @@ add_definitions(-DNOMINMAX)
 target_sources(bcn_decoder_tester PRIVATE
 	src/main.cpp
 	src/dds_loader.cpp
+    src/dds_loader.h
+    libs/bc7enc/bc7decomp.cpp
+    libs/bc7enc/bc7decomp.h
+    libs/bc7enc/rgbcx.h
 )
 target_compile_features(bcn_decoder_tester PRIVATE cxx_std_17)
 target_include_directories(bcn_decoder_tester PRIVATE

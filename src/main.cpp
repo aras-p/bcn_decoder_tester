@@ -26,7 +26,7 @@ static double get_duration(std::chrono::steady_clock::time_point since)
 static void print_time(const char* title, double t, int width, int height)
 {
     double mpix = width * height / 1000000.0 * kRuns;
-    printf("%-18s %6.3f ms %8.1f Mpix/s\n", title, t * 1000.0, mpix/t);
+    printf("  %-18s %6.1f ms %8.1f Mpix/s\n", title, t * 1000.0, mpix/t);
 }
 
 static void decode_bcdec(int width, int height, unsigned int format, const void* input, void* output)
@@ -85,44 +85,47 @@ int main(int argc, const char* argv[])
         return -1;
     }
     printf("Doing %i runs on each image\n", kRuns);
-    std::string filename = argv[1];
-    int width = 0, height = 0;
-    unsigned int format = 0;
-    void* input_data = nullptr;
-    if (!load_dds(filename.c_str(), &width, &height, &format, &input_data))
+    for (int fi = 1; fi < argc; ++fi)
     {
-        printf("ERROR: failed to read dds file '%s'\n", filename.c_str());
-        return 1;
+        std::string filename = argv[fi];
+        int width = 0, height = 0;
+        unsigned int format = 0;
+        void* input_data = nullptr;
+        if (!load_dds(filename.c_str(), &width, &height, &format, &input_data))
+        {
+            printf("ERROR: failed to read dds file '%s'\n", filename.c_str());
+            return 1;
+        }
+        printf("%s, %ix%i, %s\n", filename.c_str(), width, height, get_format_name(format));
+        // remove ".dds"
+        filename.pop_back();
+        filename.pop_back();
+        filename.pop_back();
+        filename.pop_back();
+
+        void* output_data = malloc(width * height * 12);
+        
+        for (const Decoder& dec : s_Decoders)
+        {
+            memset(output_data, 0, width * height * 12);
+            auto t0 = get_time();
+            for (int run = 0; run < kRuns; ++run)
+                dec.func(width, height, format, input_data, output_data);
+            auto dur = get_duration(t0);
+            print_time(dec.name, dur, width, height);
+
+            if (format == FORMAT_BC6H_SF16 || format == FORMAT_BC6H_UF16)
+                stbi_write_hdr((filename+"-"+dec.name+".hdr").c_str(), width, height, 3, (const float*)output_data);
+            else if (format == FORMAT_BC5_UNORM)
+                stbi_write_tga((filename+"-"+dec.name+".tga").c_str(), width, height, 2, output_data);
+            else if (format == FORMAT_BC4_UNORM)
+                stbi_write_tga((filename+"-"+dec.name+".tga").c_str(), width, height, 1, output_data);
+            else
+                stbi_write_tga((filename+"-"+dec.name+".tga").c_str(), width, height, 4, output_data);
+        }
+
+        free(input_data);
+        free(output_data);
     }
-    printf("Input: %s, %ix%i, %s\n", filename.c_str(), width, height, get_format_name(format));
-    // remove ".dds"
-    filename.pop_back();
-    filename.pop_back();
-    filename.pop_back();
-    filename.pop_back();
-
-    void* output_data = malloc(width * height * 12);
-    
-    for (const Decoder& dec : s_Decoders)
-    {
-        memset(output_data, 0, width * height * 12);
-        auto t0 = get_time();
-        for (int run = 0; run < kRuns; ++run)
-            dec.func(width, height, format, input_data, output_data);
-        auto dur = get_duration(t0);
-        print_time(dec.name, dur, width, height);
-
-        if (format == FORMAT_BC6H_SF16 || format == FORMAT_BC6H_UF16)
-            stbi_write_hdr((filename+"-"+dec.name+".hdr").c_str(), width, height, 3, (const float*)output_data);
-        else if (format == FORMAT_BC5_UNORM)
-            stbi_write_tga((filename+"-"+dec.name+".tga").c_str(), width, height, 2, output_data);
-        else if (format == FORMAT_BC4_UNORM)
-            stbi_write_tga((filename+"-"+dec.name+".tga").c_str(), width, height, 1, output_data);
-        else
-            stbi_write_tga((filename+"-"+dec.name+".tga").c_str(), width, height, 4, output_data);
-    }
-
-    free(input_data);
-    free(output_data);
     return 0;
 }

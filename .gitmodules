@@ -1,0 +1,12 @@
+[submodule "libs/bcdec"]
+	path = libs/bcdec
+	url = https://github.com/iOrange/bcdec
+[submodule "libs/DirectXTex"]
+	path = libs/DirectXTex
+	url = https://github.com/microsoft/DirectXTex
+[submodule "libs/bc7enc"]
+	path = libs/bc7enc
+	url = https://github.com/richgel999/bc7enc
+[submodule "libs/icbc"]
+	path = libs/icbc
+	url = https://github.com/castano/icbc

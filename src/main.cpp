@@ -17,6 +17,8 @@
 #define ICBC_IMPLEMENTATION 1
 #include "../libs/icbc/icbc.h"
 
+#include "../libs/etcpak/BlockData.hpp"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -280,6 +282,23 @@ static bool decode_icbc(int width, int height, unsigned int format, const void* 
     return true;
 }
 
+static bool decode_etcpak(int width, int height, unsigned int format, const void* input, void* output)
+{
+    const unsigned char* src = (const unsigned char*)input;
+    unsigned char* dst = (unsigned char*)output;
+    if (format == FORMAT_DXT1)
+    {
+        etcpak_BlockData_DecodeDxt1(input, width, height, output);
+        return true;
+    }
+    if (format == FORMAT_DXT5)
+    {
+        etcpak_BlockData_DecodeDxt5(input, width, height, output);
+        return true;
+    }
+    return false;
+}
+
 typedef bool (DecodeFunc)(int width, int height, unsigned int format, const void* input, void* output);
 
 struct Decoder
@@ -295,6 +314,7 @@ static Decoder s_Decoders[] =
     {"dxtex", decode_dxtex},
     {"swiftshader", decode_swiftshader},
     {"icbc", decode_icbc},
+    {"etcpak", decode_etcpak},
 };
 
 

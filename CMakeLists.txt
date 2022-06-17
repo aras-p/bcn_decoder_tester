@@ -18,6 +18,8 @@ target_sources(bcn_decoder_tester PRIVATE
     libs/swiftshader/BC_Decoder.cpp
     libs/swiftshader/BC_Decoder.hpp
     libs/swiftshader/Debug.cpp
+    libs/etcpak/BlockData.cpp
+    libs/etcpak/BlockData.hpp
 )
 target_compile_features(bcn_decoder_tester PRIVATE cxx_std_17)
 target_include_directories(bcn_decoder_tester PRIVATE

@@ -14,6 +14,9 @@
 
 #include "../libs/swiftshader/BC_Decoder.hpp"
 
+#define ICBC_IMPLEMENTATION 1
+#include "../libs/icbc/icbc.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,7 +38,7 @@ static double get_duration(std::chrono::steady_clock::time_point since)
 static void print_time(const char* title, double t, int width, int height)
 {
     double mpix = width * height / 1000000.0 * kRuns;
-    printf("  %-18s %6.1f ms %8.1f Mpix/s\n", title, t * 1000.0, mpix/t);
+    printf("  %-12s %6.1f ms %8.1f Mpix/s\n", title, t * 1000.0, mpix/t);
 }
 
 static bool decode_bcdec(int width, int height, unsigned int format, const void* input, void* output)
@@ -248,6 +251,35 @@ static bool decode_swiftshader(int width, int height, unsigned int format, const
     return ok;
 }
 
+static bool decode_icbc(int width, int height, unsigned int format, const void* input, void* output)
+{
+    const char* src = (const char*)input;
+    char* dst = (char*)output;
+    uint32_t rgba[16];
+    for (int i = 0; i < height; i += 4)
+    {
+        for (int j = 0; j < width; j += 4)
+        {
+            if (format == FORMAT_DXT1) {
+                icbc::decode_bc1(src, (unsigned char*)rgba);
+                src += BCDEC_BC1_BLOCK_SIZE;
+                for (int r = 0; r < 4; ++r) {
+                    memcpy(dst + (i*width+j)*4 + width * 4 * r, rgba + 4 * r, 4 * 4);
+                }
+            } else if (format == FORMAT_DXT5) {
+                icbc::decode_bc3(src, (unsigned char*)rgba);
+                src += BCDEC_BC3_BLOCK_SIZE;
+                for (int r = 0; r < 4; ++r) {
+                    memcpy(dst + (i*width+j)*4 + width * 4 * r, rgba + 4 * r, 4 * 4);
+                }
+            } else {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 typedef bool (DecodeFunc)(int width, int height, unsigned int format, const void* input, void* output);
 
 struct Decoder
@@ -262,6 +294,7 @@ static Decoder s_Decoders[] =
     {"bc7dec", decode_bc7dec},
     {"dxtex", decode_dxtex},
     {"swiftshader", decode_swiftshader},
+    {"icbc", decode_icbc},
 };
 
 

@@ -15,6 +15,9 @@ target_sources(bcn_decoder_tester PRIVATE
     libs/DirectXTex/DirectXTex/BC.h
     libs/DirectXTex/DirectXTex/BC4BC5.cpp
     libs/DirectXTex/DirectXTex/BC6HBC7.cpp
+    libs/swiftshader/BC_Decoder.cpp
+    libs/swiftshader/BC_Decoder.hpp
+    libs/swiftshader/Debug.cpp
 )
 target_compile_features(bcn_decoder_tester PRIVATE cxx_std_17)
 target_include_directories(bcn_decoder_tester PRIVATE

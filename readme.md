@@ -8,3 +8,6 @@
   Does not easily build on non-Windows: requires bits of DirectX-Headers and DirectXMath
   github projects, as well as an empty `<malloc.h>` and some stub `<sal.h>`.
 * `icbc`: https://github.com/castano/icbc, 2022 Jun 3 (502ec5a). MIT.
+* `swiftshader`: https://github.com/google/swiftshader, 2022 Jun 16 (2b79b2f). Apache-2.0.
+  Embedded the minimal set of source files directly into the repo.
+

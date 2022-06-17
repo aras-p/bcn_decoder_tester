@@ -12,6 +12,8 @@
 
 #include "../libs/DirectXTex/DirectXTex/BC.h"
 
+#include "../libs/swiftshader/BC_Decoder.hpp"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -183,6 +185,38 @@ static bool decode_dxtex(int width, int height, unsigned int format, const void*
     return true;
 }
 
+static bool decode_swiftshader(int width, int height, unsigned int format, const void* input, void* output)
+{
+    const unsigned char* src = (const unsigned char*)input;
+    unsigned char* dst = (unsigned char*)output;
+    int n = 0;
+    int dst_bpp = 4;
+    switch (format)
+    {
+        case FORMAT_DXT1: n = 1; break;
+        case FORMAT_DXT3: n = 2; break;
+        case FORMAT_DXT5: n = 3; break;
+        case FORMAT_BC4_UNORM: n = 4; dst_bpp = 1; break;
+        case FORMAT_BC5_UNORM: n = 5; dst_bpp = 2; break;
+        case FORMAT_BC6H_UF16:
+        case FORMAT_BC6H_SF16: n = 6; dst_bpp = 8; break;
+        case FORMAT_BC7_UNORM: n = 7; break;
+        default: return false;
+    }
+    bool ok = BC_Decoder::Decode(src, dst, width, height, width * dst_bpp, dst_bpp, n, format!=FORMAT_BC6H_SF16);
+    if (format == FORMAT_DXT1 || format == FORMAT_DXT3 || format == FORMAT_DXT5 || format == FORMAT_BC7_UNORM)
+    {
+        // swizzle BGRA -> RGBA
+        for (int i = 0; i < width * height; ++i) {
+            unsigned char c = dst[i*4+0];
+            dst[i*4+0] = dst[i*4+2];
+            dst[i*4+2] = c;
+        }
+    }
+    //@TODO
+    return ok;
+}
+
 typedef bool (DecodeFunc)(int width, int height, unsigned int format, const void* input, void* output);
 
 struct Decoder
@@ -196,6 +230,7 @@ static Decoder s_Decoders[] =
     {"bcdec", decode_bcdec},
     {"bc7dec", decode_bc7dec},
     {"dxtex", decode_dxtex},
+    {"swiftshader", decode_swiftshader},
 };
 
 

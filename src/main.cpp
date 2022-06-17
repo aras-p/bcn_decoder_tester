@@ -185,10 +185,31 @@ static bool decode_dxtex(int width, int height, unsigned int format, const void*
     return true;
 }
 
+// from https://gist.github.com/rygorous/2144712
+union FP32
+{
+    uint32_t u;
+    float f;
+};
+static float half_to_float_fast5(uint16_t h)
+{
+    static const FP32 magic = { (254 - 15) << 23 };
+    static const FP32 was_infnan = { (127 + 16) << 23 };
+    FP32 o;
+
+    o.u = (h & 0x7fff) << 13;       // exponent/mantissa bits
+    o.f *= magic.f;                 // exponent adjust
+    if (o.f >= was_infnan.f)        // make sure Inf/NaN survive
+        o.u |= 255 << 23;
+    o.u |= (h & 0x8000) << 16;      // sign bit
+    return o.f;
+}
+
 static bool decode_swiftshader(int width, int height, unsigned int format, const void* input, void* output)
 {
     const unsigned char* src = (const unsigned char*)input;
     unsigned char* dst = (unsigned char*)output;
+    unsigned char* dst_tmp = dst + width * height * 12;
     int n = 0;
     int dst_bpp = 4;
     switch (format)
@@ -203,7 +224,7 @@ static bool decode_swiftshader(int width, int height, unsigned int format, const
         case FORMAT_BC7_UNORM: n = 7; break;
         default: return false;
     }
-    bool ok = BC_Decoder::Decode(src, dst, width, height, width * dst_bpp, dst_bpp, n, format!=FORMAT_BC6H_SF16);
+    bool ok = BC_Decoder::Decode(src, n == 6 ? dst_tmp : dst, width, height, width * dst_bpp, dst_bpp, n, format!=FORMAT_BC6H_SF16);
     if (format == FORMAT_DXT1 || format == FORMAT_DXT3 || format == FORMAT_DXT5 || format == FORMAT_BC7_UNORM)
     {
         // swizzle BGRA -> RGBA
@@ -213,7 +234,17 @@ static bool decode_swiftshader(int width, int height, unsigned int format, const
             dst[i*4+2] = c;
         }
     }
-    //@TODO
+    if (n == 6)
+    {
+        // FP16 RGBA -> FP32 RGB
+        const uint16_t* src_u = (const uint16_t*)dst_tmp;
+        float* dst_f = (float*)dst;
+        for (int i = 0; i < width * height; ++i) {
+            dst_f[i*3+0] = half_to_float_fast5(src_u[i*4+0]);
+            dst_f[i*3+1] = half_to_float_fast5(src_u[i*4+1]);
+            dst_f[i*3+2] = half_to_float_fast5(src_u[i*4+2]);
+        }
+    }
     return ok;
 }
 
@@ -262,7 +293,7 @@ int main(int argc, const char* argv[])
         filename.pop_back();
         filename.pop_back();
 
-        void* output_data = malloc(width * height * 12);
+        void* output_data = malloc(width * height * 12 * 2);
         
         for (const Decoder& dec : s_Decoders)
         {

@@ -1,5 +1,6 @@
 
 constexpr int kRuns = 1;
+constexpr bool kWriteOutputImages = true;
 
 
 #include "dds_loader.h"
@@ -378,25 +379,29 @@ int main(int argc, const char* argv[])
             {
                 format_res.times[dec.name] += dur;
 
-                const char *ext = (format == DDSFormat::BC6HS || format == DDSFormat::BC6HU) ? ".hdr" : ".tga";
-                fs::path outputpath = outputdir / (filename.stem().string()+"-"+dec.name+ext);
-                if (format == DDSFormat::BC6HS || format == DDSFormat::BC6HU)
-                    stbi_write_hdr(outputpath.c_str(), width, height, 3, (const float*)output_data);
-                else if (format == DDSFormat::BC5)
+                if (kWriteOutputImages)
                 {
-                    char* src = (char*)output_data;
-                    char* dst = src + width * height * 2;
-                    for (int ip = 0; ip < width * height; ++ip) {
-                        dst[ip * 3 + 0] = src[ip * 2 + 0];
-                        dst[ip * 3 + 1] = src[ip * 2 + 1];
-                        dst[ip * 3 + 2] = 0;
+                    const bool bc6 = format == DDSFormat::BC6HS || format == DDSFormat::BC6HU;
+                    const char *ext = bc6 ? ".hdr" : ".tga";
+                    fs::path outputpath = outputdir / (filename.stem().string()+"-"+dec.name+ext);
+                    if (bc6)
+                        stbi_write_hdr(outputpath.c_str(), width, height, 3, (const float*)output_data);
+                    else if (format == DDSFormat::BC5)
+                    {
+                        char* src = (char*)output_data;
+                        char* dst = src + width * height * 2;
+                        for (int ip = 0; ip < width * height; ++ip) {
+                            dst[ip * 3 + 0] = src[ip * 2 + 0];
+                            dst[ip * 3 + 1] = src[ip * 2 + 1];
+                            dst[ip * 3 + 2] = 0;
+                        }
+                        stbi_write_tga(outputpath.c_str(), width, height, 3, dst);
                     }
-                    stbi_write_tga(outputpath.c_str(), width, height, 3, dst);
+                    else if (format == DDSFormat::BC4)
+                        stbi_write_tga(outputpath.c_str(), width, height, 1, output_data);
+                    else
+                        stbi_write_tga(outputpath.c_str(), width, height, 4, output_data);
                 }
-                else if (format == DDSFormat::BC4)
-                    stbi_write_tga(outputpath.c_str(), width, height, 1, output_data);
-                else
-                    stbi_write_tga(outputpath.c_str(), width, height, 4, output_data);
             }
         }
 
@@ -412,6 +417,33 @@ int main(int argc, const char* argv[])
         {
             print_time(tres.first.c_str(), tres.second, fres.second.pixelCount);
         }
+    }
+    
+    // write stats as csv
+    printf("CSV results:\n");
+    for (const auto& fres : s_Results)
+    {
+        if (fres.first == DDSFormat::BC6HS)
+            continue;
+        printf(",%s", get_format_name(fres.first));
+    }
+    printf("\n");
+    for (const Decoder& dec : s_Decoders)
+    {
+        printf("%s", dec.name);
+        for (const auto& fres : s_Results)
+        {
+            if (fres.first == DDSFormat::BC6HS)
+                continue;
+            printf(",");
+            auto it = fres.second.times.find(dec.name);
+            if (it != fres.second.times.end())
+            {
+                double mpix = fres.second.pixelCount / 1000000.0 / it->second;
+                printf("%i", (int)mpix);
+            }
+        }
+        printf("\n");
     }
 
     return 0;

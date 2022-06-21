@@ -3,7 +3,7 @@ constexpr int kRuns = 20;
 constexpr bool kWriteOutputImages = true;
 
 #define USE_BCDEC 1
-#define USE_BC7ENC 1
+#define USE_BC7ENC_RDO 1
 #define USE_DXTEX 1
 #define USE_SWIFTSHADER 1
 #define USE_ICBC 1
@@ -19,10 +19,10 @@ constexpr bool kWriteOutputImages = true;
 #   define BCDEC_IMPLEMENTATION 1
 #   include "../libs/bcdec/bcdec.h"
 #endif
-#if USE_BC7ENC
+#if USE_BC7ENC_RDO
 #   define RGBCX_IMPLEMENTATION 1
-#   include "../libs/bc7enc/rgbcx.h"
-#   include "../libs/bc7enc/bc7decomp.h"
+#   include "../libs/bc7enc_rdo/rgbcx.h"
+#   include "../libs/bc7enc_rdo/bc7decomp.h"
 #endif
 #if USE_DXTEX
 #   include "../libs/DirectXTex/DirectXTex/BC.h"
@@ -105,8 +105,8 @@ static bool decode_bcdec(int width, int height, DDSFormat format, const void* in
 }
 #endif
 
-#if USE_BC7ENC
-static bool decode_bc7dec(int width, int height, DDSFormat format, const void* input, void* output)
+#if USE_BC7ENC_RDO
+static bool decode_bc7dec_rdo(int width, int height, DDSFormat format, const void* input, void* output)
 {
     const char* src = (const char*)input;
     char* dst = (char*)output;
@@ -368,8 +368,8 @@ static Decoder s_Decoders[] =
 #if USE_BCDEC
     {"bcdec", decode_bcdec},
 #endif
-#if USE_BC7ENC
-    {"bc7dec", decode_bc7dec},
+#if USE_BC7ENC_RDO
+    {"bc7dec_rdo", decode_bc7dec_rdo},
 #endif
 #if USE_DXTEX
     {"dxtex", decode_dxtex},
@@ -426,7 +426,7 @@ int main(int argc, const char* argv[])
     }
     ReadExpectedHashes(argv[1]);
     printf("Input folder %s, output folder %s, %i runs, expected hashes %zi\n", argv[1], argv[2], kRuns, s_ExpectedHashes.size());
-#if USE_BC7ENC
+#if USE_BC7ENC_RDO
     rgbcx::init();
 #endif
 #if USE_ICBC

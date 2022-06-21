@@ -8,9 +8,10 @@ target_sources(bcn_decoder_tester PRIVATE
 	src/main.cpp
 	src/dds_loader.cpp
     src/dds_loader.h
-    libs/bc7enc/bc7decomp.cpp
-    libs/bc7enc/bc7decomp.h
-    libs/bc7enc/rgbcx.h
+    libs/bc7enc_rdo/bc7decomp.cpp
+    libs/bc7enc_rdo/bc7decomp.h
+    libs/bc7enc_rdo/rgbcx.cpp
+    libs/bc7enc_rdo/rgbcx.h
     libs/DirectXTex/DirectXTex/BC.cpp
     libs/DirectXTex/DirectXTex/BC.h
     libs/DirectXTex/DirectXTex/BC4BC5.cpp

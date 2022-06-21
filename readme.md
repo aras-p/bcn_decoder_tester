@@ -12,6 +12,8 @@
   Embedded the minimal set of source files directly into the repo.
 * `etcpak`: https://github.com/wolfpld/etcpak, 2022 Jun 4 (a77d5a3). BSD 3-clause.
   Embedded the minimal modified set of source files directly into the repo.
+* `squish`: https://sourceforge.net/projects/libsquish/, 2019 Apr 25 (r110, v1.15). MIT.
+  Embedded directly in the repo.
 
 ## Test Images:
 

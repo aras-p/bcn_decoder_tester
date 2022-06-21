@@ -1,5 +1,5 @@
 
-constexpr int kRuns = 10;
+constexpr int kRuns = 20;
 constexpr bool kWriteOutputImages = true;
 
 #define USE_BCDEC 1
@@ -13,6 +13,7 @@ constexpr bool kWriteOutputImages = true;
 #include "dds_loader.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION 1
 #include "../libs/bcdec/stb_image_write.h"
+#include "../libs/xxHash/xxhash.h"
 
 #if USE_BCDEC
 #   define BCDEC_IMPLEMENTATION 1
@@ -395,6 +396,29 @@ struct FormatResult
 };
 static std::map<DDSFormat, FormatResult> s_Results;
 
+static std::map<std::string, uint32_t> s_ExpectedHashes;
+
+static void ReadExpectedHashes(const char* inputFolder)
+{
+    namespace fs = std::filesystem;
+    fs::path hashesPath = fs::path(inputFolder) / "_hashes.txt";
+    if (!fs::exists(hashesPath))
+        return;
+    FILE *f = fopen(hashesPath.c_str(), "rt");
+    if (!f)
+        return;
+    while (true) {
+        char path[1000];
+        path[0] = 0;
+        uint32_t hash = 0;
+        if (fscanf(f, "%s %x\n", path, &hash) != 2)
+            break;
+        if (path[0] == 0)
+            break;
+        s_ExpectedHashes[path] = hash;
+    }
+    fclose(f);
+}
 
 int main(int argc, const char* argv[])
 {
@@ -403,7 +427,8 @@ int main(int argc, const char* argv[])
         printf("USAGE: bcn_decode_tester <input_folder> <output_folder>\n");
         return -1;
     }
-    printf("Input folder %s, output folder %s, %i runs\n", argv[1], argv[2], kRuns);
+    ReadExpectedHashes(argv[1]);
+    printf("Input folder %s, output folder %s, %i runs, expected hashes %zi\n", argv[1], argv[2], kRuns, s_ExpectedHashes.size());
 #if USE_BC7ENC
     rgbcx::init();
 #endif
@@ -448,10 +473,25 @@ int main(int argc, const char* argv[])
             if (ok)
             {
                 format_res.times[dec.name] += dur;
+                
+                const bool bc6 = format == DDSFormat::BC6HS || format == DDSFormat::BC6HU;
+                
+                // check if this matches expected hash, if we have it
+                {
+                    auto hit = s_ExpectedHashes.find(filename.stem().c_str());
+                    if (hit != s_ExpectedHashes.end())
+                    {
+                        uint32_t hash = XXH3_64bits(output_data, width * height * (bc6 ? 12 : 4)) & 0xffffff;
+                        if (hash != hit->second)
+                        {
+                            printf("error: expected result hash does not match for %s: expected %06x got %06x\n", dec.name, hit->second, hash);
+                            return 1;
+                        }
+                    }
+                }
 
                 if (kWriteOutputImages)
                 {
-                    const bool bc6 = format == DDSFormat::BC6HS || format == DDSFormat::BC6HU;
                     const char *ext = bc6 ? ".hdr" : ".tga";
                     fs::path outputpath = outputdir / (filename.stem().string()+"-"+dec.name+ext);
                     if (bc6)

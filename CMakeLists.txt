@@ -30,6 +30,8 @@ target_sources(bcn_decoder_tester PRIVATE
     libs/libsquish/singlecolourfit.cpp
     libs/libsquish/squish.cpp
     libs/libsquish/squish.h
+    libs/xxHash/xxhash.c
+    libs/xxHash/xxhash.h
 )
 target_compile_features(bcn_decoder_tester PRIVATE cxx_std_17)
 target_include_directories(bcn_decoder_tester PRIVATE

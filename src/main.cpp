@@ -400,10 +400,7 @@ static std::map<std::string, uint32_t> s_ExpectedHashes;
 
 static void ReadExpectedHashes(const char* inputFolder)
 {
-    namespace fs = std::filesystem;
-    fs::path hashesPath = fs::path(inputFolder) / "_hashes.txt";
-    if (!fs::exists(hashesPath))
-        return;
+    std::string hashesPath = std::string(inputFolder) + "/_hashes.txt";
     FILE *f = fopen(hashesPath.c_str(), "rt");
     if (!f)
         return;
@@ -449,12 +446,12 @@ int main(int argc, const char* argv[])
         int width = 0, height = 0;
         DDSFormat format = DDSFormat::Unknown;
         void* input_data = nullptr;
-        if (!load_dds(filename.c_str(), &width, &height, &format, &input_data))
+        if (!load_dds(filename.string().c_str(), &width, &height, &format, &input_data))
         {
-            printf("ERROR: failed to read dds file '%s'\n", filename.c_str());
+            printf("ERROR: failed to read dds file '%s'\n", filename.string().c_str());
             return 1;
         }
-        printf("%s, %ix%i, %s\n", filename.stem().c_str(), width, height, get_format_name(format));
+        printf("%s, %ix%i, %s\n", filename.stem().string().c_str(), width, height, get_format_name(format));
 
         void* output_data = malloc(width * height * 12 * 2);
 
@@ -478,7 +475,7 @@ int main(int argc, const char* argv[])
                 
                 // check if this matches expected hash, if we have it
                 {
-                    auto hit = s_ExpectedHashes.find(filename.stem().c_str());
+                    auto hit = s_ExpectedHashes.find(filename.stem().string());
                     if (hit != s_ExpectedHashes.end())
                     {
                         uint32_t hash = XXH3_64bits(output_data, width * height * (bc6 ? 12 : 4)) & 0xffffff;
@@ -493,7 +490,7 @@ int main(int argc, const char* argv[])
                 if (kWriteOutputImages)
                 {
                     const char *ext = bc6 ? ".hdr" : ".tga";
-                    fs::path outputpath = outputdir / (filename.stem().string()+"-"+dec.name+ext);
+                    std::string outputpath = (outputdir / (filename.stem().string()+"-"+dec.name+ext)).string();
                     if (bc6)
                         stbi_write_hdr(outputpath.c_str(), width, height, 3, (const float*)output_data);
                     else if (format == DDSFormat::BC5)

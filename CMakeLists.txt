@@ -34,9 +34,12 @@ target_sources(bcn_decoder_tester PRIVATE
     libs/xxHash/xxhash.h
 )
 target_compile_features(bcn_decoder_tester PRIVATE cxx_std_17)
-target_include_directories(bcn_decoder_tester PRIVATE
-    libs/DirectX-Headers/include
-    libs/DirectX-Headers/include/wsl/stubs
-    libs/DirectXMath/Inc
-    libs
-)
+
+if (NOT WIN32) 
+    target_include_directories(bcn_decoder_tester PRIVATE
+        libs/DirectX-Headers/include
+        libs/DirectX-Headers/include/wsl/stubs
+        libs/DirectXMath/Inc
+        libs
+    )
+endif()

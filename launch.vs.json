@@ -1,0 +1,17 @@
+{
+  "version": "0.2.1",
+  "defaults": {},
+  "configurations": [
+    {
+      "type": "default",
+      "project": "CMakeLists.txt",
+      "projectTarget": "bcn_decoder_tester.exe",
+      "name": "bcn_decoder_tester.exe",
+      "currentDir": "${workspaceRoot}",
+      "args": [
+        "test_images",
+        "out/output_images"
+      ]
+    }
+  ]
+}

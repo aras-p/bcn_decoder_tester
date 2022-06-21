@@ -24,6 +24,7 @@
 #include <string.h>
 #include <chrono>
 #include <string>
+#include <filesystem>
 
 constexpr int kRuns = 10;
 
@@ -320,17 +321,24 @@ static Decoder s_Decoders[] =
 
 int main(int argc, const char* argv[])
 {
-    if (argc < 2)
+    if (argc != 3)
     {
-        printf("USAGE: bcn_decode_tester <path/to/input.dds> ...\n");
+        printf("USAGE: bcn_decode_tester <input_folder> <output_folder>\n");
         return -1;
     }
-    printf("Doing %i runs on each image\n", kRuns);
+    printf("Input folder %s, output folder %s, %i runs\n", argv[1], argv[2], kRuns);
     rgbcx::init();
     
-    for (int fi = 1; fi < argc; ++fi)
+    namespace fs = std::filesystem;
+    fs::path outputdir = argv[2];
+    fs::create_directories(outputdir);
+    for (auto const& de : fs::recursive_directory_iterator(argv[1]))
     {
-        std::string filename = argv[fi];
+        if (!de.is_regular_file())
+            continue;
+        if (de.path().extension() != ".dds")
+            continue;
+        fs::path filename = de.path();
         int width = 0, height = 0;
         unsigned int format = 0;
         void* input_data = nullptr;
@@ -340,11 +348,6 @@ int main(int argc, const char* argv[])
             return 1;
         }
         printf("%s, %ix%i, %s\n", filename.c_str(), width, height, get_format_name(format));
-        // remove ".dds"
-        filename.pop_back();
-        filename.pop_back();
-        filename.pop_back();
-        filename.pop_back();
 
         void* output_data = malloc(width * height * 12 * 2);
         
@@ -360,8 +363,10 @@ int main(int argc, const char* argv[])
             {
                 print_time(dec.name, dur, width, height);
 
+                const char *ext = (format == FORMAT_BC6H_SF16 || format == FORMAT_BC6H_UF16) ? ".hdr" : ".tga";
+                fs::path outputpath = outputdir / (filename.stem().string()+"-"+dec.name+ext);
                 if (format == FORMAT_BC6H_SF16 || format == FORMAT_BC6H_UF16)
-                    stbi_write_hdr((filename+"-"+dec.name+".hdr").c_str(), width, height, 3, (const float*)output_data);
+                    stbi_write_hdr(outputpath.c_str(), width, height, 3, (const float*)output_data);
                 else if (format == FORMAT_BC5_UNORM)
                 {
                     char* src = (char*)output_data;
@@ -371,12 +376,12 @@ int main(int argc, const char* argv[])
                         dst[ip * 3 + 1] = src[ip * 2 + 1];
                         dst[ip * 3 + 2] = 0;
                     }
-                    stbi_write_tga((filename+"-"+dec.name+".tga").c_str(), width, height, 3, dst);
+                    stbi_write_tga(outputpath.c_str(), width, height, 3, dst);
                 }
                 else if (format == FORMAT_BC4_UNORM)
-                    stbi_write_tga((filename+"-"+dec.name+".tga").c_str(), width, height, 1, output_data);
+                    stbi_write_tga(outputpath.c_str(), width, height, 1, output_data);
                 else
-                    stbi_write_tga((filename+"-"+dec.name+".tga").c_str(), width, height, 4, output_data);
+                    stbi_write_tga(outputpath.c_str(), width, height, 4, output_data);
             }
         }
 

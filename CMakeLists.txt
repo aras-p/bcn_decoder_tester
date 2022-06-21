@@ -20,6 +20,16 @@ target_sources(bcn_decoder_tester PRIVATE
     libs/swiftshader/Debug.cpp
     libs/etcpak/BlockData.cpp
     libs/etcpak/BlockData.hpp
+    libs/libsquish/alpha.cpp
+    libs/libsquish/clusterfit.cpp
+    libs/libsquish/colourblock.cpp
+    libs/libsquish/colourfit.cpp
+    libs/libsquish/colourset.cpp
+    libs/libsquish/maths.cpp
+    libs/libsquish/rangefit.cpp
+    libs/libsquish/singlecolourfit.cpp
+    libs/libsquish/squish.cpp
+    libs/libsquish/squish.h
 )
 target_compile_features(bcn_decoder_tester PRIVATE cxx_std_17)
 target_include_directories(bcn_decoder_tester PRIVATE

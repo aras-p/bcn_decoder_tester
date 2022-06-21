@@ -8,6 +8,7 @@ constexpr bool kWriteOutputImages = true;
 #define USE_SWIFTSHADER 1
 #define USE_ICBC 1
 #define USE_ETCPAK 1
+#define USE_SQUISH 1
 
 #include "dds_loader.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION 1
@@ -35,6 +36,9 @@ constexpr bool kWriteOutputImages = true;
 #endif
 #if USE_ETCPAK
 #   include "../libs/etcpak/BlockData.hpp"
+#endif
+#if USE_SQUISH
+#   include "../libs/libsquish/squish.h"
 #endif
 
 #include <stdio.h>
@@ -330,6 +334,26 @@ static bool decode_etcpak(int width, int height, DDSFormat format, const void* i
 }
 #endif
 
+#if USE_SQUISH
+static bool decode_squish(int width, int height, DDSFormat format, const void* input, void* output)
+{
+    const unsigned char* src = (const unsigned char*)input;
+    unsigned char* dst = (unsigned char*)output;
+    int flags = -1;
+    switch(format) {
+        case DDSFormat::BC1: flags = squish::kDxt1; break;
+        case DDSFormat::BC2: flags = squish::kDxt3; break;
+        case DDSFormat::BC3: flags = squish::kDxt5; break;
+        case DDSFormat::BC4: flags = squish::kBc4; break;
+        case DDSFormat::BC5: flags = squish::kBc5; break;
+        default:
+            return false;
+    }
+    squish::DecompressImage(dst, width, height, src, flags);
+    return true;
+}
+#endif
+
 typedef bool (DecodeFunc)(int width, int height, DDSFormat format, const void* input, void* output);
 
 struct Decoder
@@ -357,6 +381,9 @@ static Decoder s_Decoders[] =
 #endif
 #if USE_ETCPAK
     {"etcpak", decode_etcpak},
+#endif
+#if USE_SQUISH
+    {"squish", decode_squish},
 #endif
 };
 

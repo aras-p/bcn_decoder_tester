@@ -77,7 +77,7 @@ typedef struct DDS_HEADER_DXT10 {
     unsigned int    miscFlags2;
 } DDS_HEADER_DXT10_t;
 
-bool load_dds(const char* filePath, int* w, int* h, unsigned int* fourcc, void** compressedData)
+bool load_dds(const char* filePath, int* w, int* h, DDSFormat* format, void** compressedData)
 {
     unsigned int magic, compressedSize;
     DDSURFACEDESC2_t ddsDesc;
@@ -97,7 +97,9 @@ bool load_dds(const char* filePath, int* w, int* h, unsigned int* fourcc, void**
 
     *w = ddsDesc.dwWidth;
     *h = ddsDesc.dwHeight;
-    *fourcc = ddsDesc.ddpfPixelFormat.dwFourCC;
+    *format = DDSFormat::Unknown;
+    unsigned int fourcc = 0;
+    fourcc = ddsDesc.ddpfPixelFormat.dwFourCC;
 
     if (ddsDesc.ddpfPixelFormat.dwFourCC == FORMAT_DXT1) {
         compressedSize = BC1_COMPRESSED_SIZE(ddsDesc.dwWidth, ddsDesc.dwHeight);
@@ -106,7 +108,7 @@ bool load_dds(const char* filePath, int* w, int* h, unsigned int* fourcc, void**
     } else if (ddsDesc.ddpfPixelFormat.dwFourCC == FOURCC_DX10) {
         fread(&dx10Desc, 1, sizeof(dx10Desc), f);
 
-        *fourcc = dx10Desc.dxgiFormat;
+        fourcc = dx10Desc.dxgiFormat;
 
         if (dx10Desc.dxgiFormat == FORMAT_BC4_UNORM) {
             compressedSize = BC4_COMPRESSED_SIZE(ddsDesc.dwWidth, ddsDesc.dwHeight);
@@ -126,21 +128,32 @@ bool load_dds(const char* filePath, int* w, int* h, unsigned int* fourcc, void**
     *compressedData = malloc(compressedSize);
     fread(*compressedData, 1, compressedSize, f);
     fclose(f);
+    
+    switch (fourcc) {
+        case FORMAT_DXT1: *format = DDSFormat::BC1; break;
+        case FORMAT_DXT3: *format = DDSFormat::BC2; break;
+        case FORMAT_DXT5: *format = DDSFormat::BC3; break;
+        case FORMAT_BC4_UNORM: *format = DDSFormat::BC4; break;
+        case FORMAT_BC5_UNORM: *format = DDSFormat::BC5; break;
+        case FORMAT_BC6H_UF16: *format = DDSFormat::BC6HU; break;
+        case FORMAT_BC6H_SF16: *format = DDSFormat::BC6HS; break;
+        case FORMAT_BC7_UNORM: *format = DDSFormat::BC7; break;
+    }
 
     return true;
 }
 
-const char* get_format_name(unsigned int format_fourcc)
+const char* get_format_name(DDSFormat format)
 {
-    switch (format_fourcc) {
-        case FORMAT_DXT1: return "BC1";
-        case FORMAT_DXT3: return "BC2";
-        case FORMAT_DXT5: return "BC3";
-        case FORMAT_BC4_UNORM: return "BC4";
-        case FORMAT_BC5_UNORM: return "BC5";
-        case FORMAT_BC7_UNORM: return "BC7";
-        case FORMAT_BC6H_UF16: return "BC6H Unsigned";
-        case FORMAT_BC6H_SF16: return "BC6H Signed";
+    switch (format) {
+        case DDSFormat::BC1: return "BC1";
+        case DDSFormat::BC2: return "BC2";
+        case DDSFormat::BC3: return "BC3";
+        case DDSFormat::BC4: return "BC4";
+        case DDSFormat::BC5: return "BC5";
+        case DDSFormat::BC6HU: return "BC6Hu";
+        case DDSFormat::BC6HS: return "BC6Hs";
+        case DDSFormat::BC7: return "BC7";
         default: return "Unknown";
     }
 }

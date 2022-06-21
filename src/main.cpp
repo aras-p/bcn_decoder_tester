@@ -549,7 +549,7 @@ int main(int argc, const char* argv[])
             auto it = fres.second.times.find(dec.name);
             if (it != fres.second.times.end())
             {
-                double mpix = fres.second.pixelCount / 1000000.0 / it->second;
+                double mpix = fres.second.pixelCount / 1000000.0 * kRuns / it->second;
                 printf("%i", (int)mpix);
             }
         }

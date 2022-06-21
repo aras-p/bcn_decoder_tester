@@ -1,28 +1,41 @@
 
-constexpr int kRuns = 1;
+constexpr int kRuns = 10;
 constexpr bool kWriteOutputImages = true;
 
+#define USE_BCDEC 1
+#define USE_BC7ENC 1
+#define USE_DXTEX 1
+#define USE_SWIFTSHADER 1
+#define USE_ICBC 1
+#define USE_ETCPAK 1
 
 #include "dds_loader.h"
-
 #define STB_IMAGE_WRITE_IMPLEMENTATION 1
 #include "../libs/bcdec/stb_image_write.h"
 
-#define BCDEC_IMPLEMENTATION 1
-#include "../libs/bcdec/bcdec.h"
-
-#define RGBCX_IMPLEMENTATION 1
-#include "../libs/bc7enc/rgbcx.h"
-#include "../libs/bc7enc/bc7decomp.h"
-
-#include "../libs/DirectXTex/DirectXTex/BC.h"
-
-#include "../libs/swiftshader/BC_Decoder.hpp"
-
-#define ICBC_IMPLEMENTATION 1
-#include "../libs/icbc/icbc.h"
-
-#include "../libs/etcpak/BlockData.hpp"
+#if USE_BCDEC
+#   define BCDEC_IMPLEMENTATION 1
+#   include "../libs/bcdec/bcdec.h"
+#endif
+#if USE_BC7ENC
+#   define RGBCX_IMPLEMENTATION 1
+#   include "../libs/bc7enc/rgbcx.h"
+#   include "../libs/bc7enc/bc7decomp.h"
+#endif
+#if USE_DXTEX
+#   include "../libs/DirectXTex/DirectXTex/BC.h"
+#endif
+#if USE_SWIFTSHADER
+#   include "../libs/swiftshader/BC_Decoder.hpp"
+#endif
+#if USE_ICBC
+#   define ICBC_IMPLEMENTATION 1
+#   define ICBC_SIMD 0 // scalar version for testing
+#   include "../libs/icbc/icbc.h"
+#endif
+#if USE_ETCPAK
+#   include "../libs/etcpak/BlockData.hpp"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,6 +61,7 @@ static void print_time(const char* title, double t, size_t pixelCount)
     printf("  %-12s %6.1f ms %8.1f Mpix/s\n", title, t * 1000.0, mpix/t);
 }
 
+#if USE_BCDEC
 static bool decode_bcdec(int width, int height, DDSFormat format, const void* input, void* output)
 {
     const char* src = (const char*)input;
@@ -84,7 +98,9 @@ static bool decode_bcdec(int width, int height, DDSFormat format, const void* in
     }
     return true;
 }
+#endif
 
+#if USE_BC7ENC
 static bool decode_bc7dec(int width, int height, DDSFormat format, const void* input, void* output)
 {
     const char* src = (const char*)input;
@@ -131,7 +147,9 @@ static bool decode_bc7dec(int width, int height, DDSFormat format, const void* i
     }
     return true;
 }
+#endif
 
+#if USE_DXTEX
 static bool decode_dxtex(int width, int height, DDSFormat format, const void* input, void* output)
 {
     using namespace DirectX;
@@ -194,7 +212,9 @@ static bool decode_dxtex(int width, int height, DDSFormat format, const void* in
     }
     return true;
 }
+#endif
 
+#if USE_SWIFTSHADER
 // from https://gist.github.com/rygorous/2144712
 union FP32
 {
@@ -257,25 +277,28 @@ static bool decode_swiftshader(int width, int height, DDSFormat format, const vo
     }
     return ok;
 }
+#endif
 
+#if USE_ICBC
 static bool decode_icbc(int width, int height, DDSFormat format, const void* input, void* output)
 {
     const char* src = (const char*)input;
     char* dst = (char*)output;
     uint32_t rgba[16];
+    memset(rgba, 0xFF, sizeof(rgba));
     for (int i = 0; i < height; i += 4)
     {
         for (int j = 0; j < width; j += 4)
         {
             if (format == DDSFormat::BC1) {
                 icbc::decode_bc1(src, (unsigned char*)rgba);
-                src += BCDEC_BC1_BLOCK_SIZE;
+                src += 8;
                 for (int r = 0; r < 4; ++r) {
                     memcpy(dst + (i*width+j)*4 + width * 4 * r, rgba + 4 * r, 4 * 4);
                 }
             } else if (format == DDSFormat::BC3) {
                 icbc::decode_bc3(src, (unsigned char*)rgba);
-                src += BCDEC_BC3_BLOCK_SIZE;
+                src += 16;
                 for (int r = 0; r < 4; ++r) {
                     memcpy(dst + (i*width+j)*4 + width * 4 * r, rgba + 4 * r, 4 * 4);
                 }
@@ -286,7 +309,9 @@ static bool decode_icbc(int width, int height, DDSFormat format, const void* inp
     }
     return true;
 }
+#endif
 
+#if USE_ETCPAK
 static bool decode_etcpak(int width, int height, DDSFormat format, const void* input, void* output)
 {
     const unsigned char* src = (const unsigned char*)input;
@@ -303,6 +328,7 @@ static bool decode_etcpak(int width, int height, DDSFormat format, const void* i
     }
     return false;
 }
+#endif
 
 typedef bool (DecodeFunc)(int width, int height, DDSFormat format, const void* input, void* output);
 
@@ -314,12 +340,24 @@ struct Decoder
 
 static Decoder s_Decoders[] =
 {
+#if USE_BCDEC
     {"bcdec", decode_bcdec},
+#endif
+#if USE_BC7ENC
     {"bc7dec", decode_bc7dec},
+#endif
+#if USE_DXTEX
     {"dxtex", decode_dxtex},
+#endif
+#if USE_SWIFTSHADER
     {"swiftshader", decode_swiftshader},
+#endif
+#if USE_ICBC
     {"icbc", decode_icbc},
+#endif
+#if USE_ETCPAK
     {"etcpak", decode_etcpak},
+#endif
 };
 
 struct FormatResult
@@ -339,7 +377,12 @@ int main(int argc, const char* argv[])
         return -1;
     }
     printf("Input folder %s, output folder %s, %i runs\n", argv[1], argv[2], kRuns);
+#if USE_BC7ENC
     rgbcx::init();
+#endif
+#if USE_ICBC
+    icbc::init();
+#endif
     
     namespace fs = std::filesystem;
     fs::path outputdir = argv[2];

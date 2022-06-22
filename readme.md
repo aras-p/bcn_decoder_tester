@@ -14,6 +14,7 @@
   Embedded the minimal modified set of source files directly into the repo.
 * `squish`: https://sourceforge.net/projects/libsquish/, 2019 Apr 25 (r110, v1.15). MIT.
   Embedded directly in the repo.
+* `convection`: https://github.com/elasota/ConvectionKernels, 2021 Jun 21 (dc2dbbe). MIT.
 
 ## Test Images:
 

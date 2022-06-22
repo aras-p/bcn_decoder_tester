@@ -19,3 +19,6 @@
 [submodule "libs/bc7enc_rdo"]
 	path = libs/bc7enc_rdo
 	url = https://github.com/richgel999/bc7enc_rdo
+[submodule "libs/ConvectionKernels"]
+	path = libs/ConvectionKernels
+	url = https://github.com/elasota/ConvectionKernels

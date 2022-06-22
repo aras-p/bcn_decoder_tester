@@ -33,6 +33,12 @@ target_sources(bcn_decoder_tester PRIVATE
     libs/libsquish/squish.h
     libs/xxHash/xxhash.c
     libs/xxHash/xxhash.h
+    libs/ConvectionKernels/ConvectionKernels_BC67.cpp
+    libs/ConvectionKernels/ConvectionKernels_BC67.h
+    libs/ConvectionKernels/ConvectionKernels_BC6H_IO.cpp
+    libs/ConvectionKernels/ConvectionKernels_BC7_PrioData.cpp
+    libs/ConvectionKernels/ConvectionKernels_IndexSelector.cpp
+    libs/ConvectionKernels/ConvectionKernels_Util.cpp
 )
 target_compile_features(bcn_decoder_tester PRIVATE cxx_std_17)
 

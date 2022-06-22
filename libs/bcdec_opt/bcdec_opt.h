@@ -206,35 +206,37 @@ void bcdec__smooth_alpha_block(const void* compressedBlock, void* decompressedBl
 }
 
 typedef struct bcdec__bitstream {
-    unsigned char*  bitstream;
-    int             bitPos;
+    unsigned long long low;
+    unsigned long long high;
 } bcdec__bitstream_t;
 
-int bcdec__bitstream_read_bit(bcdec__bitstream_t* bstream) {
-    int i, b;
+int bcdec__bitstream_read_bits(bcdec__bitstream_t* bstream, int numBits) {
+    unsigned int mask = (1 << numBits) - 1;
+    /* Read the low N bits */
+    unsigned int bits = (bstream->low & mask);
 
-    i = bstream->bitPos >> 3;
-    b = (bstream->bitstream[i] >> (bstream->bitPos - (i << 3))) & 0x01;
-    bstream->bitPos++;
-    return b;
+    bstream->low >>= numBits;
+    /* Put the low N bits of "high" into the high 64-N bits of "low". */
+    bstream->low |= (bstream->high & mask) << (sizeof(bstream->high) * 8 - numBits);
+    bstream->high >>= numBits;
+    
+    return bits;
 }
 
-int bcdec__bitstream_read_bits(bcdec__bitstream_t* bstream, int numBits) {
-    int result = 0, i = numBits;
-    while (i) {
-        result |= (bcdec__bitstream_read_bit(bstream) << (numBits - i));
-        i--;
-    }
-    return result;
+int bcdec__bitstream_read_bit(bcdec__bitstream_t* bstream) {
+    return bcdec__bitstream_read_bits(bstream, 1);
 }
 
 /*  reversed bits pulling, used in BC6H decoding
     why ?? just why ??? */
 int bcdec__bitstream_read_bits_r(bcdec__bitstream_t* bstream, int numBits) {
+    int bits = bcdec__bitstream_read_bits(bstream, numBits);
+    /* Reverse the bits. */
     int result = 0;
     while (numBits--) {
         result <<= 1;
-        result |= bcdec__bitstream_read_bit(bstream);
+        result |= (bits & 1);
+        bits >>= 1;
     }
     return result;
 }
@@ -422,8 +424,8 @@ void bcdec_bc6h(const void* compressedBlock, void* decompressedBlock, int destin
 
     decompressed = (float*)decompressedBlock;
 
-    bstream.bitstream = (unsigned char*)compressedBlock;
-    bstream.bitPos = 0;
+    bstream.low = ((unsigned long long*)compressedBlock)[0];
+    bstream.high = ((unsigned long long*)compressedBlock)[1];
 
     r[0] = r[1] = r[2] = r[3] = 0;
     g[0] = g[1] = g[2] = g[3] = 0;
@@ -1043,8 +1045,8 @@ void bcdec_bc7(const void* compressedBlock, void* decompressedBlock, int destina
 
     decompressed = (unsigned char*)decompressedBlock;
 
-    bstream.bitstream = (unsigned char*)compressedBlock;
-    bstream.bitPos = 0;
+    bstream.low = ((unsigned long long*)compressedBlock)[0];
+    bstream.high = ((unsigned long long*)compressedBlock)[1];
 
     for (mode = 0; mode < 8 && (0 == bcdec__bitstream_read_bit(&bstream)); ++mode);
 

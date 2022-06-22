@@ -64,3 +64,8 @@ if (NOT WIN32)
         libs
     )
 endif()
+
+if (WIN32)
+    # RelWithDebInfo uses /Ob1 only :/
+    target_compile_options(bcn_decoder_tester PRIVATE /Ob2)
+endif()

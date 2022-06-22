@@ -90,7 +90,7 @@ void bcdec__color_block(const void* compressedBlock, void* decompressedBlock, in
     unsigned short c0, c1;
     unsigned int refColors[4];
     unsigned char* dstColors;
-    unsigned char* colorIndices;
+    unsigned int colorIndices;
     int i, j, idx;
     unsigned int r0, g0, b0, r1, g1, b1, r, g, b;
 
@@ -131,14 +131,15 @@ void bcdec__color_block(const void* compressedBlock, void* decompressedBlock, in
         refColors[3] = 0x00000000;
     }
 
-    colorIndices = ((unsigned char*)compressedBlock) + 4;
+    colorIndices = ((unsigned int*)compressedBlock)[1];
 
     /* Fill out the decompressed color block */
     dstColors = (unsigned char*)decompressedBlock;
     for (i = 0; i < 4; ++i) {
         for (j = 0; j < 4; ++j) {
-            idx = (colorIndices[i] >> (2 * j)) & 0x03;
+            idx = colorIndices & 0x03;
             memcpy(dstColors + 4 * j, refColors + idx, 4);
+            colorIndices >>= 2;
         }
 
         dstColors += destinationPitch;

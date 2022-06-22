@@ -1,6 +1,6 @@
 
 constexpr int kRuns = 20;
-constexpr bool kWriteOutputImages = true;
+constexpr bool kWriteOutputImages = false;
 
 #define USE_BCDEC 1
 #define USE_BC7ENC_RDO 1
@@ -8,8 +8,8 @@ constexpr bool kWriteOutputImages = true;
 #define USE_SWIFTSHADER 1
 #define USE_ICBC 0 // seems to broken: garbage alpha in both BC1 & BC3
 #define USE_ETCPAK 1
-#define USE_SQUISH 1
-#define USE_CONVECTION 1
+#define USE_SQUISH 1 // note: not including BC4/BC5 (broken)
+#define USE_CONVECTION 1 // note: not including BC6 (broken)
 #define USE_COMPRESSONATOR 1
 #define USE_MESA 1
 
@@ -608,23 +608,23 @@ static Decoder s_Decoders[] =
 #if USE_SWIFTSHADER
     {"swiftshader", decode_swiftshader},
 #endif
+#if USE_COMPRESSONATOR
+    {"amd_cmp", decode_compressonator},
+#endif
+#if USE_MESA
+    {"mesa", decode_mesa},
+#endif
+#if USE_SQUISH
+    {"squish", decode_squish},
+#endif
 #if USE_ICBC
     {"icbc", decode_icbc},
 #endif
 #if USE_ETCPAK
     {"etcpak", decode_etcpak},
 #endif
-#if USE_SQUISH
-    {"squish", decode_squish},
-#endif
 #if USE_CONVECTION
     {"convection", decode_convection},
-#endif
-#if USE_COMPRESSONATOR
-    {"amd_cmp", decode_compressonator},
-#endif
-#if USE_MESA
-    {"mesa", decode_mesa},
 #endif
 };
 

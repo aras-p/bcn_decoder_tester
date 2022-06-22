@@ -164,16 +164,16 @@ void bcdec__sharp_alpha_block(const void* compressedBlock, void* decompressedBlo
 }
 
 void bcdec__smooth_alpha_block(const void* compressedBlock, void* decompressedBlock, int destinationPitch, int pixelSize) {
-    unsigned char* block;
     unsigned char* decompressed;
     unsigned char alpha[8];
-    int i, j, indices;
+    int i, j;
+    unsigned long long block, indices;
 
-    block = (unsigned char*)compressedBlock;
+    block = *(unsigned long long*)compressedBlock;
     decompressed = (unsigned char*)decompressedBlock;
 
-    alpha[0] = block[0];
-    alpha[1] = block[1];
+    alpha[0] = block & 0xFF;
+    alpha[1] = (block >> 8) & 0xFF;
 
     if (alpha[0] > alpha[1]) {
         /* 6 interpolated alpha values. */
@@ -194,8 +194,7 @@ void bcdec__smooth_alpha_block(const void* compressedBlock, void* decompressedBl
         alpha[7] = 0xFF;
     }
 
-    /* first 8 indices */
-    indices = block[2] | (block[3] << 8) | (block[4] << 16);
+    indices = block >> 16;
     for (i = 0; i < 4; ++i) {
         for (j = 0; j < 4; ++j) {
             decompressed[j * pixelSize] = alpha[indices & 0x07];
@@ -203,11 +202,6 @@ void bcdec__smooth_alpha_block(const void* compressedBlock, void* decompressedBl
         }
 
         decompressed += destinationPitch;
-
-        if (i == 1) {
-            /* second 8 indices */
-            indices = block[5] | (block[6] << 8) | (block[7] << 16);
-        }
     }
 }
 

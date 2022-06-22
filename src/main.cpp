@@ -2,7 +2,8 @@
 constexpr int kRuns = 20;
 constexpr bool kWriteOutputImages = false;
 
-#define USE_BCDEC 1
+#define USE_BCDEC 0
+#define USE_BCDEC_OPT 1
 #define USE_BC7ENC_RDO 1
 #define USE_DXTEX 1
 #define USE_SWIFTSHADER 1
@@ -18,9 +19,17 @@ constexpr bool kWriteOutputImages = false;
 #include "../libs/bcdec/stb_image_write.h"
 #include "../libs/xxHash/xxhash.h"
 
+#if USE_BCDEC && USE_BCDEC_OPT
+#error Can't compile both original bcdec and modified bcdec_opt
+#endif
+
 #if USE_BCDEC
 #   define BCDEC_IMPLEMENTATION 1
 #   include "../libs/bcdec/bcdec.h"
+#endif
+#if USE_BCDEC_OPT
+#   define BCDEC_IMPLEMENTATION 1
+#   include "../libs/bcdec_opt/bcdec_opt.h"
 #endif
 #if USE_BC7ENC_RDO
 #   define RGBCX_IMPLEMENTATION 1
@@ -90,7 +99,7 @@ static void print_time(const char* title, double t, size_t pixelCount)
     printf("  %-12s %6.1f ms %8.1f Mpix/s\n", title, t * 1000.0, mpix/t);
 }
 
-#if USE_BCDEC
+#if USE_BCDEC || USE_BCDEC_OPT
 static bool decode_bcdec(int width, int height, DDSFormat format, const void* input, void* output)
 {
     const char* src = (const char*)input;
@@ -604,6 +613,9 @@ static Decoder s_Decoders[] =
 {
 #if USE_BCDEC
     {"bcdec", decode_bcdec},
+#endif
+#if USE_BCDEC_OPT
+    {"bcdec_opt", decode_bcdec},
 #endif
 #if USE_BC7ENC_RDO
     {"bc7dec_rdo", decode_bc7dec_rdo},

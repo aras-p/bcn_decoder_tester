@@ -8,6 +8,7 @@ target_sources(bcn_decoder_tester PRIVATE
 	src/main.cpp
 	src/dds_loader.cpp
     src/dds_loader.h
+    libs/bcdec_opt/bcdec_opt.h
     libs/bc7enc_rdo/bc7decomp.cpp
     libs/bc7enc_rdo/bc7decomp.h
     libs/bc7enc_rdo/rgbcx.cpp

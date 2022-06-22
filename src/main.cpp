@@ -52,6 +52,12 @@ constexpr bool kWriteOutputImages = false;
 #   include "../libs/compressonator/cmp_core/source/cmp_core.h"
 #endif
 #if USE_MESA
+#   ifdef _MSC_VER
+#       define DECLSPEC_IMPORT __declspec(dllimport)
+#       define WINGDIAPI DECLSPEC_IMPORT
+#       define WINAPI __stdcall
+#       define APIENTRY    WINAPI
+#   endif
 #   include "../libs/mesa/src/mesa/main/texcompress_s3tc_tmp.h"
 extern "C" {
 #   include "../libs/mesa/src/util/rgtc.h"

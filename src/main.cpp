@@ -6,7 +6,7 @@ constexpr bool kWriteOutputImages = true;
 #define USE_BC7ENC_RDO 1
 #define USE_DXTEX 1
 #define USE_SWIFTSHADER 1
-#define USE_ICBC 1
+#define USE_ICBC 0 // seems to broken: garbage alpha in both BC1 & BC3
 #define USE_ETCPAK 1
 #define USE_SQUISH 1
 #define USE_CONVECTION 1
@@ -350,12 +350,28 @@ static bool decode_squish(int width, int height, DDSFormat format, const void* i
         case DDSFormat::BC1: flags = squish::kDxt1; break;
         case DDSFormat::BC2: flags = squish::kDxt3; break;
         case DDSFormat::BC3: flags = squish::kDxt5; break;
-        case DDSFormat::BC4: flags = squish::kBc4; break;
-        case DDSFormat::BC5: flags = squish::kBc5; break;
+        // BC4/BC5 decompression is broken in squish
+        //case DDSFormat::BC4: flags = squish::kBc4; break;
+        //case DDSFormat::BC5: flags = squish::kBc5; break;
         default:
             return false;
     }
     squish::DecompressImage(dst, width, height, src, flags);
+    if (format == DDSFormat::BC4)
+    {
+        // rgba -> r
+        for (int i = 0; i < width * height; ++i)
+            dst[i] = dst[i*4];
+    }
+    if (format == DDSFormat::BC5)
+    {
+        // rgba -> rg
+        for (int i = 0; i < width * height; ++i)
+        {
+            dst[i*2+0] = dst[i*4+0];
+            dst[i*2+1] = dst[i*4+1];
+        }
+    }
     return true;
 }
 #endif
@@ -365,6 +381,8 @@ static bool decode_convection(int width, int height, DDSFormat format, const voi
 {
     const uint8_t* src = (const uint8_t*)input;
     uint8_t* dst = (uint8_t*)output;
+    /* seems to be broken */
+#if 0
     if (format == DDSFormat::BC6HU || format == DDSFormat::BC6HS)
     {
         cvtt::PixelBlockF16 rgba;
@@ -384,6 +402,7 @@ static bool decode_convection(int width, int height, DDSFormat format, const voi
         }
         return true;
     }
+#endif
     if (format == DDSFormat::BC7)
     {
         cvtt::PixelBlockU8 rgba;
@@ -535,7 +554,7 @@ int main(int argc, const char* argv[])
                         if (hash != hit->second)
                         {
                             printf("error: expected result hash does not match for %s: expected %06x got %06x\n", dec.name, hit->second, hash);
-                            //return 1;
+                            return 1;
                         }
                     }
                 }

@@ -82,13 +82,9 @@ void bcdec_bc7(const void* compressedBlock, void* decompressedBlock, int destina
 
 #ifdef BCDEC_IMPLEMENTATION
 
-typedef struct bcdec__rgba {
-    unsigned char r, g, b, a;
-} bcdec__rgba_t;
-
 void bcdec__color_block(const void* compressedBlock, void* decompressedBlock, int destinationPitch, int onlyOpaqueMode) {
     unsigned short c0, c1;
-    unsigned int refColors[4];
+    unsigned int refColors[4]; /* 0xAABBGGRR */
     unsigned char* dstColors;
     unsigned int colorIndices;
     int i, j, idx;
@@ -138,7 +134,7 @@ void bcdec__color_block(const void* compressedBlock, void* decompressedBlock, in
     for (i = 0; i < 4; ++i) {
         for (j = 0; j < 4; ++j) {
             idx = colorIndices & 0x03;
-            memcpy(dstColors + 4 * j, refColors + idx, 4);
+            ((unsigned int*)dstColors)[j] = refColors[idx];
             colorIndices >>= 2;
         }
 

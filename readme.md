@@ -15,7 +15,9 @@
 * `squish`: https://sourceforge.net/projects/libsquish/, 2019 Apr 25 (r110, v1.15). MIT.
   Embedded directly in the repo.
 * `convection`: https://github.com/elasota/ConvectionKernels, 2021 Jun 21 (dc2dbbe). MIT.
-* `compressonator`: https://github.com/GPUOpen-Tools/compressonator, 2022 Jun 20 (b2b4ee3). MIT.
+* `amd_cmp`: https://github.com/GPUOpen-Tools/compressonator, 2022 Jun 20 (b2b4ee3). MIT.
+* `mesa`: https://github.com/mesa3d/mesa, 2022 Jun 22 (ad3d6d9). MIT.
+  Embedded the minimal modified set of source files directly into the repo.
 
 ## Test Images:
 

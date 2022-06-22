@@ -11,6 +11,7 @@ constexpr bool kWriteOutputImages = true;
 #define USE_SQUISH 1
 #define USE_CONVECTION 1
 #define USE_COMPRESSONATOR 1
+#define USE_MESA 1
 
 #include "dds_loader.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION 1
@@ -49,6 +50,14 @@ constexpr bool kWriteOutputImages = true;
 #endif
 #if USE_COMPRESSONATOR
 #   include "../libs/compressonator/cmp_core/source/cmp_core.h"
+#endif
+#if USE_MESA
+#   include "../libs/mesa/src/mesa/main/texcompress_s3tc_tmp.h"
+extern "C" {
+#   include "../libs/mesa/src/util/rgtc.h"
+}
+#   define BPTC_BLOCK_DECODE
+#   include "../libs/mesa/src/mesa/main/texcompress_bptc_tmp.h"
 #endif
 
 #include <stdio.h>
@@ -490,6 +499,93 @@ static bool decode_compressonator(int width, int height, DDSFormat format, const
 }
 #endif
 
+#if USE_MESA
+static bool decode_mesa(int width, int height, DDSFormat format, const void* input, void* output)
+{
+    const uint8_t* src = (const uint8_t*)input;
+    uint8_t* dst = (uint8_t*)output;
+    if (format == DDSFormat::BC1)
+    {
+        for (int i = 0; i < height; ++i)
+        {
+            for (int j = 0; j < width; ++j)
+            {
+                fetch_2d_texel_rgba_dxt1(width, src, j, i, dst);
+                dst += 4;
+            }
+        }
+        return true;
+    }
+    if (format == DDSFormat::BC2)
+    {
+        for (int i = 0; i < height; ++i)
+        {
+            for (int j = 0; j < width; ++j)
+            {
+                fetch_2d_texel_rgba_dxt3(width, src, j, i, dst);
+                dst += 4;
+            }
+        }
+        return true;
+    }
+    if (format == DDSFormat::BC3)
+    {
+        for (int i = 0; i < height; ++i)
+        {
+            for (int j = 0; j < width; ++j)
+            {
+                fetch_2d_texel_rgba_dxt5(width, src, j, i, dst);
+                dst += 4;
+            }
+        }
+        return true;
+    }
+    if (format == DDSFormat::BC4)
+    {
+        for (int i = 0; i < height; ++i)
+        {
+            for (int j = 0; j < width; ++j)
+            {
+                util_format_unsigned_fetch_texel_rgtc(width, src, j, i, dst, 1);
+                dst += 1;
+            }
+        }
+        return true;
+    }
+    if (format == DDSFormat::BC5)
+    {
+        for (int i = 0; i < height; ++i)
+        {
+            for (int j = 0; j < width; ++j)
+            {
+                util_format_unsigned_fetch_texel_rgtc(width, src, j, i, dst, 2);
+                util_format_unsigned_fetch_texel_rgtc(width, src + 8, j, i, dst + 1, 2);
+                dst += 2;
+            }
+        }
+        return true;
+    }
+    if (format == DDSFormat::BC6HU || format == DDSFormat::BC6HS)
+    {
+        float* dstf = (float*)dst;
+        decompress_rgb_float(width, height, src, width, dstf, width * 16, format == DDSFormat::BC6HS);
+        for (int i = 0; i < width * height; ++i)
+        {
+            dstf[i*3+0] = dstf[i*4+0];
+            dstf[i*3+1] = dstf[i*4+1];
+            dstf[i*3+2] = dstf[i*4+2];
+        }
+        return true;
+    }
+    if (format == DDSFormat::BC7)
+    {
+        decompress_rgba_unorm(width, height, src, width, dst, width * 4);
+        return true;
+    }
+    return false;
+}
+#endif
+
 typedef bool (DecodeFunc)(int width, int height, DDSFormat format, const void* input, void* output);
 
 struct Decoder
@@ -526,6 +622,9 @@ static Decoder s_Decoders[] =
 #endif
 #if USE_COMPRESSONATOR
     {"amd_cmp", decode_compressonator},
+#endif
+#if USE_MESA
+    {"mesa", decode_mesa},
 #endif
 };
 

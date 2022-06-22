@@ -46,6 +46,8 @@ target_sources(bcn_decoder_tester PRIVATE
     libs/compressonator/cmp_core/shaders/bc5_encode_kernel.cpp
     libs/compressonator/cmp_core/shaders/bc6_encode_kernel.cpp
     libs/compressonator/cmp_core/shaders/bc7_encode_kernel.cpp
+    libs/mesa/src/util/rgtc.c
+    libs/mesa/src/util/half_float.c
 )
 target_compile_features(bcn_decoder_tester PRIVATE cxx_std_17)
 

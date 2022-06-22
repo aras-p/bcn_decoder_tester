@@ -22,3 +22,6 @@
 [submodule "libs/ConvectionKernels"]
 	path = libs/ConvectionKernels
 	url = https://github.com/elasota/ConvectionKernels
+[submodule "libs/compressonator"]
+	path = libs/compressonator
+	url = https://github.com/GPUOpen-Tools/compressonator

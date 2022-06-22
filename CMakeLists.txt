@@ -39,10 +39,21 @@ target_sources(bcn_decoder_tester PRIVATE
     libs/ConvectionKernels/ConvectionKernels_BC7_PrioData.cpp
     libs/ConvectionKernels/ConvectionKernels_IndexSelector.cpp
     libs/ConvectionKernels/ConvectionKernels_Util.cpp
+    libs/compressonator/cmp_core/shaders/bc1_encode_kernel.cpp
+    libs/compressonator/cmp_core/shaders/bc2_encode_kernel.cpp
+    libs/compressonator/cmp_core/shaders/bc3_encode_kernel.cpp
+    libs/compressonator/cmp_core/shaders/bc4_encode_kernel.cpp
+    libs/compressonator/cmp_core/shaders/bc5_encode_kernel.cpp
+    libs/compressonator/cmp_core/shaders/bc6_encode_kernel.cpp
+    libs/compressonator/cmp_core/shaders/bc7_encode_kernel.cpp
 )
 target_compile_features(bcn_decoder_tester PRIVATE cxx_std_17)
 
-if (NOT WIN32) 
+target_include_directories(bcn_decoder_tester PRIVATE
+    libs/compressonator/cmp_core/source
+    libs/compressonator/cmp_core/shaders
+)
+if (NOT WIN32)
     target_include_directories(bcn_decoder_tester PRIVATE
         libs/DirectX-Headers/include
         libs/DirectX-Headers/include/wsl/stubs

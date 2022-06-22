@@ -15,6 +15,7 @@
 * `squish`: https://sourceforge.net/projects/libsquish/, 2019 Apr 25 (r110, v1.15). MIT.
   Embedded directly in the repo.
 * `convection`: https://github.com/elasota/ConvectionKernels, 2021 Jun 21 (dc2dbbe). MIT.
+* `compressonator`: https://github.com/GPUOpen-Tools/compressonator, 2022 Jun 20 (b2b4ee3). MIT.
 
 ## Test Images:
 

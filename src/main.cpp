@@ -26,6 +26,7 @@ constexpr bool kWriteOutputImages = true;
 #   include "../libs/bc7enc_rdo/bc7decomp.h"
 #endif
 #if USE_DXTEX
+#   include <algorithm>
 #   include "../libs/DirectXTex/DirectXTex/BC.h"
 #endif
 #if USE_SWIFTSHADER
@@ -121,31 +122,31 @@ static bool decode_bc7dec_rdo(int width, int height, DDSFormat format, const voi
         {
             if (format == DDSFormat::BC1) {
                 rgbcx::unpack_bc1(src, rgba);
-                src += BCDEC_BC1_BLOCK_SIZE;
+                src += 8;
                 for (int r = 0; r < 4; ++r) {
                     memcpy(dst + (i*width+j)*4 + width * 4 * r, rgba + 4 * r, 4 * 4);
                 }
             } else if (format == DDSFormat::BC3) {
                 rgbcx::unpack_bc3(src, rgba);
-                src += BCDEC_BC3_BLOCK_SIZE;
+                src += 16;
                 for (int r = 0; r < 4; ++r) {
                     memcpy(dst + (i*width+j)*4 + width * 4 * r, rgba + 4 * r, 4 * 4);
                 }
             } else if (format == DDSFormat::BC7) {
                 bc7decomp::unpack_bc7(src, (bc7decomp::color_rgba*)rgba);
-                src += BCDEC_BC7_BLOCK_SIZE;
+                src += 16;
                 for (int r = 0; r < 4; ++r) {
                     memcpy(dst + (i*width+j)*4 + width * 4 * r, rgba + 4 * r, 4 * 4);
                 }
             } else if (format == DDSFormat::BC4) {
                 rgbcx::unpack_bc4(src, (uint8_t*)rgba, 1);
-                src += BCDEC_BC4_BLOCK_SIZE;
+                src += 8;
                 for (int r = 0; r < 4; ++r) {
                     memcpy(dst + (i*width+j)*1 + width * 1 * r, rgba + r, 4);
                 }
             } else if (format == DDSFormat::BC5) {
                 rgbcx::unpack_bc5(src, rgba, 0, 1, 2);
-                src += BCDEC_BC5_BLOCK_SIZE;
+                src += 16;
                 for (int r = 0; r < 4; ++r) {
                     memcpy(dst + (i*width+j)*2 + width * 2 * r, rgba + 2 * r, 4 * 2);
                 }
@@ -172,34 +173,34 @@ static bool decode_dxtex(int width, int height, DDSFormat format, const void* in
         {
             if (format == DDSFormat::BC1) {
                 D3DXDecodeBC1(rgbaf, src);
-                src += BCDEC_BC1_BLOCK_SIZE;
+                src += 8;
                 for (int c = 0; c < 16; ++c) XMStoreUByteN4(rgbai+c, rgbaf[c]);
                 for (int r = 0; r < 4; ++r) memcpy(dst + (i*width+j)*4 + width * 4 * r, rgbai + 4 * r, 4 * 4);
             } else if (format == DDSFormat::BC2) {
                 D3DXDecodeBC2(rgbaf, src);
-                src += BCDEC_BC2_BLOCK_SIZE;
+                src += 16;
                 for (int c = 0; c < 16; ++c) XMStoreUByteN4(rgbai+c, rgbaf[c]);
                 for (int r = 0; r < 4; ++r) memcpy(dst + (i*width+j)*4 + width * 4 * r, rgbai + 4 * r, 4 * 4);
             } else if (format == DDSFormat::BC3) {
                 D3DXDecodeBC3(rgbaf, src);
-                src += BCDEC_BC3_BLOCK_SIZE;
+                src += 16;
                 for (int c = 0; c < 16; ++c) XMStoreUByteN4(rgbai+c, rgbaf[c]);
                 for (int r = 0; r < 4; ++r) memcpy(dst + (i*width+j)*4 + width * 4 * r, rgbai + 4 * r, 4 * 4);
             } else if (format == DDSFormat::BC7) {
                 D3DXDecodeBC7(rgbaf, src);
-                src += BCDEC_BC7_BLOCK_SIZE;
+                src += 16;
                 for (int c = 0; c < 16; ++c) XMStoreUByteN4(rgbai+c, rgbaf[c]);
                 for (int r = 0; r < 4; ++r) memcpy(dst + (i*width+j)*4 + width * 4 * r, rgbai + 4 * r, 4 * 4);
             } else if (format == DDSFormat::BC4) {
                 D3DXDecodeBC4U(rgbaf, src);
-                src += BCDEC_BC4_BLOCK_SIZE;
+                src += 8;
                 for (int c = 0; c < 16; ++c) {
                     XMStoreUByteN4(rgbai+c, rgbaf[c]);
                     dst[(i*width+j) + width*(c/4) + (c&3)] = rgbai[c].x;
                 }
             } else if (format == DDSFormat::BC5) {
                 D3DXDecodeBC5U(rgbaf, src);
-                src += BCDEC_BC5_BLOCK_SIZE;
+                src += 16;
                 for (int c = 0; c < 16; ++c) {
                     XMStoreUByteN4(rgbai+c, rgbaf[c]);
                     dst[(i*width+j)*2 + width*2*(c/4) + (c&3)*2 + 0] = rgbai[c].x;
@@ -210,7 +211,7 @@ static bool decode_dxtex(int width, int height, DDSFormat format, const void* in
                     D3DXDecodeBC6HU(rgbaf, src);
                 else
                     D3DXDecodeBC6HS(rgbaf, src);
-                src += BCDEC_BC6H_BLOCK_SIZE;
+                src += 16;
                 for (int c = 0; c < 16; ++c) {
                     memcpy(dst + (i*width+j)*12 + width*(c/4)*12 + (c&3)*12, rgbaf+c, 12);
                 }

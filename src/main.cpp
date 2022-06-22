@@ -6,12 +6,12 @@ constexpr bool kWriteOutputImages = false;
 #define USE_BC7ENC_RDO 1
 #define USE_DXTEX 1
 #define USE_SWIFTSHADER 1
-#define USE_ICBC 0 // seems to broken: garbage alpha in both BC1 & BC3
-#define USE_ETCPAK 1
-#define USE_SQUISH 1 // note: not including BC4/BC5 (broken)
-#define USE_CONVECTION 1 // note: not including BC6 (broken)
 #define USE_COMPRESSONATOR 1
 #define USE_MESA 1
+#define USE_SQUISH 1 // note: not including BC4/BC5 (broken)
+#define USE_ETCPAK 1
+#define USE_CONVECTION 1 // note: not including BC6 (broken)
+//#define USE_ICBC 0 // seems to broken: garbage alpha in both BC1 & BC3
 
 #include "dds_loader.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION 1

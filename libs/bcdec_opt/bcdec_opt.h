@@ -88,43 +88,47 @@ typedef struct bcdec__rgba {
 
 void bcdec__color_block(const void* compressedBlock, void* decompressedBlock, int destinationPitch, int onlyOpaqueMode) {
     unsigned short c0, c1;
-    bcdec__rgba_t refColors[4];
+    unsigned int refColors[4];
     unsigned char* dstColors;
     unsigned char* colorIndices;
     int i, j, idx;
-
-    refColors[0].a = refColors[1].a = refColors[2].a = refColors[3].a = 0xFF;
+    unsigned int r0, g0, b0, r1, g1, b1, r, g, b;
 
     c0 = ((unsigned short*)compressedBlock)[0];
     c1 = ((unsigned short*)compressedBlock)[1];
 
     /* Expand 565 ref colors to 888 */
-    refColors[0].r = (((c0 >> 11) & 0x1F) * 527 + 23) >> 6;
-    refColors[0].g = (((c0 >> 5)  & 0x3F) * 259 + 33) >> 6;
-    refColors[0].b =  ((c0        & 0x1F) * 527 + 23) >> 6;
+    r0 = (((c0 >> 11) & 0x1F) * 527 + 23) >> 6;
+    g0 = (((c0 >> 5)  & 0x3F) * 259 + 33) >> 6;
+    b0 =  ((c0        & 0x1F) * 527 + 23) >> 6;
+    refColors[0] = 0xFF000000 | (b0 << 16) | (g0 << 8) | r0;
 
-    refColors[1].r = (((c1 >> 11) & 0x1F) * 527 + 23) >> 6;
-    refColors[1].g = (((c1 >> 5)  & 0x3F) * 259 + 33) >> 6;
-    refColors[1].b =  ((c1        & 0x1F) * 527 + 23) >> 6;
+    r1 = (((c1 >> 11) & 0x1F) * 527 + 23) >> 6;
+    g1 = (((c1 >> 5)  & 0x3F) * 259 + 33) >> 6;
+    b1 =  ((c1        & 0x1F) * 527 + 23) >> 6;
+    refColors[1] = 0xFF000000 | (b1 << 16) | (g1 << 8) | r1;
 
     if (c0 > c1 || onlyOpaqueMode) {    /* Standard BC1 mode (also BC3 color block uses ONLY this mode) */
         /* color_2 = 2/3*color_0 + 1/3*color_1
            color_3 = 1/3*color_0 + 2/3*color_1 */
-        refColors[2].r = (2 * refColors[0].r + refColors[1].r + 1) / 3;
-        refColors[2].g = (2 * refColors[0].g + refColors[1].g + 1) / 3;
-        refColors[2].b = (2 * refColors[0].b + refColors[1].b + 1) / 3;
+        r = (2 * r0 + r1 + 1) / 3;
+        g = (2 * g0 + g1 + 1) / 3;
+        b = (2 * b0 + b1 + 1) / 3;
+        refColors[2] = 0xFF000000 | (b << 16) | (g << 8) | r;
 
-        refColors[3].r = (refColors[0].r + 2 * refColors[1].r + 1) / 3;
-        refColors[3].g = (refColors[0].g + 2 * refColors[1].g + 1) / 3;
-        refColors[3].b = (refColors[0].b + 2 * refColors[1].b + 1) / 3;
+        r = (r0 + 2 * r1 + 1) / 3;
+        g = (g0 + 2 * g1 + 1) / 3;
+        b = (b0 + 2 * b1 + 1) / 3;
+        refColors[3] = 0xFF000000 | (b << 16) | (g << 8) | r;
     } else {                            /* Quite rare BC1A mode */
         /* color_2 = 1/2*color_0 + 1/2*color_1;
            color_3 = 0;                         */
-        refColors[2].r = (refColors[0].r + refColors[1].r + 1) >> 1;
-        refColors[2].g = (refColors[0].g + refColors[1].g + 1) >> 1;
-        refColors[2].b = (refColors[0].b + refColors[1].b + 1) >> 1;
+        r = (r0 + r1 + 1) >> 1;
+        g = (g0 + g1 + 1) >> 1;
+        b = (b0 + b1 + 1) >> 1;
+        refColors[2] = 0xFF000000 | (b << 16) | (g << 8) | r;
 
-        refColors[3].r = refColors[3].g = refColors[3].b = refColors[3].a = 0;
+        refColors[3] = 0x00000000;
     }
 
     colorIndices = ((unsigned char*)compressedBlock) + 4;
@@ -134,10 +138,7 @@ void bcdec__color_block(const void* compressedBlock, void* decompressedBlock, in
     for (i = 0; i < 4; ++i) {
         for (j = 0; j < 4; ++j) {
             idx = (colorIndices[i] >> (2 * j)) & 0x03;
-            dstColors[4 * j + 0] = refColors[idx].r;
-            dstColors[4 * j + 1] = refColors[idx].g;
-            dstColors[4 * j + 2] = refColors[idx].b;
-            dstColors[4 * j + 3] = refColors[idx].a;
+            memcpy(dstColors + 4 * j, refColors + idx, 4);
         }
 
         dstColors += destinationPitch;

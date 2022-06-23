@@ -1,5 +1,7 @@
 # Testing various BCn decoding libraries
 
+Code for "[**Comparing BCn texture decoders**](https://aras-p.info/blog/2022/06/23/Comparing-BCn-texture-decoders/)" blog post.
+
 ### Libraries Tested:
 
 Used as git submodules:

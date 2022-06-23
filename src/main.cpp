@@ -3,14 +3,14 @@ constexpr int kRuns = 20;
 constexpr bool kWriteOutputImages = false;
 
 #define USE_BCDEC 1
-#define USE_BC7ENC_RDO 1
 #define USE_DXTEX 1
 #define USE_SWIFTSHADER 1
 #define USE_COMPRESSONATOR 1
 #define USE_MESA 1
+#define USE_BC7ENC_RDO 1
 #define USE_SQUISH 1 // note: not including BC4/BC5 (broken)
 #define USE_ETCPAK 1
-#define USE_CONVECTION 1 // note: not including BC6 (broken)
+#define USE_CONVECTION 1
 //#define USE_ICBC 0 // seems to broken: garbage alpha in both BC1 & BC3
 
 #include "dds_loader.h"
@@ -401,8 +401,6 @@ static bool decode_convection(int width, int height, DDSFormat format, const voi
 {
     const uint8_t* src = (const uint8_t*)input;
     uint8_t* dst = (uint8_t*)output;
-    /* seems to be broken */
-#if 0
     if (format == DDSFormat::BC6HU || format == DDSFormat::BC6HS)
     {
         cvtt::PixelBlockF16 rgba;
@@ -422,7 +420,6 @@ static bool decode_convection(int width, int height, DDSFormat format, const voi
         }
         return true;
     }
-#endif
     if (format == DDSFormat::BC7)
     {
         cvtt::PixelBlockU8 rgba;
@@ -605,9 +602,6 @@ static Decoder s_Decoders[] =
 #if USE_BCDEC
     {"bcdec", decode_bcdec},
 #endif
-#if USE_BC7ENC_RDO
-    {"bc7dec_rdo", decode_bc7dec_rdo},
-#endif
 #if USE_DXTEX
     {"dxtex", decode_dxtex},
 #endif
@@ -619,6 +613,9 @@ static Decoder s_Decoders[] =
 #endif
 #if USE_MESA
     {"mesa", decode_mesa},
+#endif
+#if USE_BC7ENC_RDO
+    {"bc7dec_rdo", decode_bc7dec_rdo},
 #endif
 #if USE_SQUISH
     {"squish", decode_squish},

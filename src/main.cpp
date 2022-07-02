@@ -118,7 +118,7 @@ static bool decode_bcdec(int width, int height, DDSFormat format, const void* in
                 bcdec_bc5(src, dst + (i*width+j)*2, width * 2);
                 src += BCDEC_BC5_BLOCK_SIZE;                
             } else if (format == DDSFormat::BC6HU || format == DDSFormat::BC6HS) {
-                bcdec_bc6h(src, dst + (i*width+j)*12, width * 3, format == DDSFormat::BC6HS);
+                bcdec_bc6h_float(src, dst + (i*width+j)*12, width * 3, format == DDSFormat::BC6HS);
                 src += BCDEC_BC5_BLOCK_SIZE;                
             } else {
                 return false;

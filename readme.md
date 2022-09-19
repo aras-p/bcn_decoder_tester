@@ -8,7 +8,7 @@ Used as git submodules:
 
 * `amd_cmp`: https://github.com/GPUOpen-Tools/compressonator, 2022 Jun 20 (b2b4ee3). MIT.
 * `bc7enc_rdo`: https://github.com/richgel999/bc7enc_rdo, 2021 Dec 27 (e6990bc). MIT or public domain.
-* `bcdec`: https://github.com/iOrange/bcdec, 2022 Juj 2 (950f75b). MIT or Unlicense.
+* `bcdec`: https://github.com/iOrange/bcdec, 2022 Sep 15 (026acf9). MIT or Unlicense.
 * `convection`: https://github.com/elasota/ConvectionKernels, 2022 Jun 23 (350416d). MIT.
 * `DirectXTex`: https://github.com/microsoft/DirectXTex, 2022 Jun 6 (679538e). MIT.
   Does not easily build on non-Windows: requires bits of DirectX-Headers and DirectXMath
